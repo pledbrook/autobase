@@ -1,0 +1,5 @@
+*.log
+*/.*.swp
+.svn
+*.zip
+.DS_Store
