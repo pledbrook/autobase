@@ -1,3 +1,7 @@
 * Cope with Liquibase's use of java.util.logging (UGH)
 * Remove the println statements and turn them into logging statements
 * Auto-launch an editor when a migration is created, assuming that $EDITOR is set.
+* don't overwrite existing changelog.groovy file (or at least ask) when installing the plugin
+* sort migration files according to file name and not according to relative path (i.e. author), 
+  this enables multiple users to decide on the sequence their migrations will be run in using 
+  a naming convention

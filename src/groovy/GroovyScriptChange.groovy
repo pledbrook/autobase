@@ -14,7 +14,7 @@ import java.util.*;
 import org.apache.commons.lang.StringUtils
 
 public class GroovyScriptChange implements liquibase.change.Change {
-
+  static final String TAG_NAME = 'groovyScript'
   String sourceFile;
   Set<DatabaseObject> affectedObjects = new HashSet<DatabaseObject>(1);
   def result;
@@ -22,7 +22,7 @@ public class GroovyScriptChange implements liquibase.change.Change {
   FileOpener fileOpener;
   ChangeSet changeSet;
 
-  String getChangeName() { return "groovyScript" }
+  String getChangeName() { return TAG_NAME }
   String getTagName() { return this.changeName }
 
   void executeStatements(Database db, List<SqlVisitor> sqlVisitors) throws JDBCException, UnsupportedChangeException {

@@ -8,6 +8,7 @@ The approach to this plugin is to leave the database update mode ("hbm2ddl.auto"
 </description>
   <documentation>http://github.com/RobertFischer/autobase/wikis</documentation>
   <resources>
+    <resource>BuildConfig</resource>
     <resource>DataSource</resource>
     <resource>UrlMappings</resource>
   </resources>

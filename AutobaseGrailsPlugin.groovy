@@ -14,19 +14,18 @@
   limitations under the License.
 */
 import org.slf4j.bridge.*;
-import liquibase.LiquibaseDsl;
-import liquibase.log.LogFactory;
-import java.util.logging.Level as JavaLogLevel;
 import grails.util.GrailsUtil;
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
-import org.apache.log4j.*;
+import org.apache.log4j.*
+import liquibase.parser.factory.OpenChangeFactory
+import autobase.change.GroovyScriptChange
+import java.util.logging.Handler
 
 
 class AutobaseGrailsPlugin {
 
     private static final Logger log = Logger.getLogger(AutobaseGrailsPlugin);
 
-    def version = '0.8.2.5'
+    def version = '0.8.3'
     def dependsOn = [hibernate:GrailsUtil.grailsVersion]
 		def observe = []
 		def watchedResources = []
@@ -45,16 +44,43 @@ The approach to this plugin is to leave the database update mode ("hbm2ddl.auto"
     def documentation = "http://github.com/RobertFischer/autobase/wikis"
 		//"http://grails.org/Autobase+Plugin"
 
+    private static final Closure doInstallSlf4jBridge = {
+      try {
+        SLF4JBridgeHandler.install()
+        //here we do a little hack. The SLF4JBridgeHandler wants to be the only handler registered with the logger
+        //but for some reason we get an extra console handler in the array, so we remove it
+        def logParent = liquibase.log.LogFactory.getLogger().parent
+        Handler slf4jHandler = (Handler) logParent.handlers.find { it instanceof SLF4JBridgeHandler }
+        if (logParent.handlers.length > 1 && slf4jHandler) {
+          def handlersToRemove = logParent.getHandlers() - slf4jHandler
+          handlersToRemove.each { Handler handler ->
+            logParent.removeHandler(handler)
+          }
+        }
+      } catch (Throwable e) {
+        log.error("Error setting up slf4j bridge, message: ${e.getMessage()}", e)  
+      }
+    }
+
+    //TODO: Formalize how we want to register change/precondition extensions conventionally
+    private static final Closure doRegisterExtensions = {
+      try {
+        OpenChangeFactory.instance.registerChange(GroovyScriptChange.TAG_NAME, GroovyScriptChange.class)
+      } catch (Throwable e) {
+        GrailsUtil.deepSanitize(e)
+        log.error("Error registering extensions, message: ${e.getMessage()}", e)
+      }
+    }
+
 		private static final Closure doMigrate = {application, appCtx ->
 			try {
-          SLF4JBridgeHandler.install()
-			    def runOnCreateDrop = application.config.autobase.runOnCreateDrop 
+          def runOnCreateDrop = application.config.autobase.runOnCreateDrop
 			    if (runOnCreateDrop == false && application.config.dataSource.dbCreate == 'create-drop') {
             log.info("Skipping Autobase migration due to create-drop (set 'autobase.runOnCreateDrop' to 'false' in Config.groovy to run anyway)")
           } else {
-            log.info("Beginning Autobase migration")
+            log.info("---- Starting Autobase migrations  ----")
             Autobase.migrate(appCtx)
-            log.info("Successfully completed Autobase migration")
+            log.info("---- Autobase migrations completed ----")
           } 
 			} catch(Exception e) {
 				GrailsUtil.deepSanitize(e)
@@ -65,9 +91,9 @@ The approach to this plugin is to leave the database update mode ("hbm2ddl.auto"
     def doWithSpring = { }
 
     def doWithApplicationContext = { appCtx ->
-      println "Starting migration"
+      doInstallSlf4jBridge()
+      doRegisterExtensions()
       doMigrate(application, appCtx)
-      println "Ended migration"
     }
 
     def doWithWebDescriptor = {}
