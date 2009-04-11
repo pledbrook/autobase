@@ -20,8 +20,7 @@ import liquibase.database.*
 import liquibase.exception.*
 import liquibase.preconditions.*
 import liquibase.dsl.parser.groovy.ParamCatcher
-import liquibase.dsl.parser.groovy.ParamCatcher
-import liquibase.dsl.parser.groovy.ParamCatcher
+import liquibase.parser.factory.OpenPreconditionFactory
 
 /**
 * Key class for the preconditions in the Groovy builder.  This class wraps some kind of <code>PreconditionLogic</code>, and
@@ -75,7 +74,7 @@ class GroovyPrecondition extends Preconditions implements Precondition {
 	*	Method that catches the tags that fall through the cracks.
 	*/
   def methodMissing(String name, args) {
-    def found = PreconditionFactory.instance.create(name)
+    def found = OpenPreconditionFactory.instance.create(name)
 		if(found) {
       def stringArg = args?.find { it instanceof String }
       def mapArg = args?.find { it instanceof Map }

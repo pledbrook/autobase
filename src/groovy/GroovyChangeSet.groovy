@@ -19,18 +19,16 @@ import liquibase.*;
 import liquibase.change.*;
 import liquibase.dsl.properties.*
 import liquibase.exception.*
-import org.apache.commons.lang.StringUtils
 import liquibase.dsl.parser.groovy.ColumnCatcher
-import liquibase.dsl.parser.groovy.ColumnCatcher
-import liquibase.dsl.parser.groovy.ColumnCatcher
+import liquibase.parser.factory.OpenChangeFactory
+import liquibase.preconditions.Preconditions
 
 /**
 * Key class for the change sets in the Groovy builder.  
 */
-class GroovyChangeSet extends ChangeSet {
-
+class GroovyChangeSet extends ChangeSet implements ConditionallyExecuted {
+  private @Delegate PreconditionSupport preconditionDelegate = new PreconditionSupport(this)
   String lastTag
-
   FileOpener fileOpener
 
 	/**
@@ -49,7 +47,6 @@ class GroovyChangeSet extends ChangeSet {
 			m?.context ?: "",
 			m?.dbms ?: ""
 		)
-    this.setPreconditions(new GroovyPrecondition())
 	}
 
 	/**
@@ -69,19 +66,6 @@ class GroovyChangeSet extends ChangeSet {
 		this.comments = cmnt ?: ""
 	}
 
-  void preCondition(Map m=null, Closure c) {
-    preConditions(m,c)
-  }
-
-	void preConditions(Map m=null, Closure c) {
-    if(!m) { m = [:] }
-    if(!c) { c = {->} }
-    def precondition = this.getPrecondition()
-    m.each { k,v -> 
-      precondition."set${StringUtils.capitalize(k)}"(v)
-    }
-    precondition.and(c)
-	}
 
 	void validCheckSum(String chkSum) {
 		addValidCheckSum(chkSum)
@@ -92,15 +76,10 @@ class GroovyChangeSet extends ChangeSet {
 	}
 
 	def methodMissing(String name, args) {
-    if(name == 'preConditions') { // TODO WTF?  Why do I have to hand-roll this?
-      args = args as List
-      this.preConditions(args.find { it instanceof Map}, args.find { it instanceof Closure })
-      return
-    }
     if(name == "column") {
       throw new IllegalStateException("Either parsed the file wrong or a 'column' tag is out of place (last tag: $lastTag)")
     }
-    Change inst = ChangeFactory.instance.create(name)
+    Change inst = OpenChangeFactory.instance.create(name)
     lastTag = "${inst.changeName}[${inst.class}]"
     inst.fileOpener = fileOpener
 		if(args) {
@@ -138,4 +117,11 @@ class GroovyChangeSet extends ChangeSet {
 		addChange((Change)inst)
   }
 
+  public Preconditions getPreconditions() {
+    return getPrecondition()
+  }
+
+  public String toString() {
+    return getId()
+  }
 }

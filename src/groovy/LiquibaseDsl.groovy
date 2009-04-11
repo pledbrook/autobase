@@ -30,15 +30,16 @@ import liquibase.parser.xml.XMLChangeLogParser;
 import liquibase.dsl.properties.*;
 import liquibase.parser.groovy.*;
 import org.apache.commons.lang.StringUtils
-import liquibase.dsl.parser.groovy.GroovyChangeLogParser;
+import liquibase.dsl.parser.groovy.GroovyChangeLogParser
+import java.util.logging.Logger
+import java.util.logging.Level
 
 /**
 *  Executes the Liquibase command with appropriate mangling to handle the DSLs.
 */
 class LiquibaseDsl extends Liquibase {
-	
+  private static final Logger log = liquibase.log.LogFactory.logger
 	private static final String PARSER_SUFFIX_PREFIX = "lbdsl.parser.suffix"
-
   private final String changeLogPath;
 
 	public LiquibaseDsl(String changeLogFile, FileOpener opener, Database db) {
@@ -67,7 +68,7 @@ class LiquibaseDsl extends Liquibase {
             parser = new XMLChangeLogParser()
           }
 
-          DatabaseChangeLog changeLog = parser.parse(changeLogPath, fileOpener, [:]);
+          DatabaseChangeLog changeLog = parser.parse(changeLogPath, fileOpener, [:], database);
           changeLog.validate(database);
           ChangeLogIterator logIterator = new ChangeLogIterator(changeLog, 
             [
@@ -76,8 +77,13 @@ class LiquibaseDsl extends Liquibase {
               new DbmsChangeSetFilter(database)
             ] as liquibase.parser.filter.ChangeSetFilter[]);
           logIterator.run(new UpdateVisitor(database), database);
+      } catch (ValidationFailedException e) {
+        //TODO: Figure out what we do with the log level here, we get here from a failed precondition on the databaseChangeLog level (and perhaps from elsewhere) 
+        log.log(Level.INFO, e.getMessage())
+
       } catch(PreconditionFailedException e) {
         log.log(Level.SEVERE, "Terminating run due to failed Precondition")
+        
       } catch (LiquibaseException e) {
           throw e;
       } finally {

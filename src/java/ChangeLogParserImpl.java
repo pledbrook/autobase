@@ -16,7 +16,10 @@ package liquibase.parser;
 //    along with Liquibase-DSL.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-import liquibase.*;
+import liquibase.DatabaseChangeLog;
+import liquibase.FileOpener;
+import liquibase.database.Database;
+
 import java.util.Map;
 
 /**
@@ -27,6 +30,6 @@ public interface ChangeLogParserImpl {
 	/**
 	*	 Method responsible for parsing a particular file.
 	*/
-	public DatabaseChangeLog parse(String physicalChangeLogLocation, FileOpener fileOpener, Map changeLogProperties);
+	public DatabaseChangeLog parse(String physicalChangeLogLocation, FileOpener fileOpener, Map changeLogProperties, Database db);
 
 }

@@ -17,44 +17,23 @@ package liquibase.dsl.parser.groovy
 //
 import liquibase.*;
 import liquibase.exception.*
-import liquibase.preconditions.*
 import java.util.logging.*
-import org.apache.commons.io.FileUtils
+import liquibase.database.Database
 
 /**
 *	Root of the Groovy database change log builder.
 */
-class GroovyDatabaseChangeLog extends DatabaseChangeLog {
-
+class GroovyDatabaseChangeLog extends DatabaseChangeLog implements ConditionallyExecuted {
+  private @Delegate PreconditionSupport preconditionDelegate = new PreconditionSupport(this)
   private static final Logger log = liquibase.log.LogFactory.logger
 
 	/**
 	*	Convenience method in case a user feels like hand-rolling the change log for some reason.
 	*/
-	GroovyDatabaseChangeLog(String physicalFilePath) {
+	GroovyDatabaseChangeLog(String physicalFilePath, Database db) {
 		super(physicalFilePath)
-    log.level = Level.ALL
-    if(!this.preconditions) {
-      this.preconditions = new Preconditions()
-    }
+    preconditions.check(db, this) 
 	}
-
-	// /**
-	// *	Constructs preconditions for this object.  Each precondition body is implicitly ANDed with the existing preconditions.
-	// */
-	/*void preConditions(Closure body={}) {
-    AndPrecondition addMe = this.preconditions
-    body.delegate = new GroovyPrecondition()
-    body()
-    addMe.addNestedPrecondition((Precondition)body.delegate)
-	}*/
-
-	// /**
-	// *  Alias for <code>preConditions</code>.
-	// */
-	/* void runIf(Closure body) {
-		preConditions(body);
-	}*/
 
 	/**
 	* Creates a <code>GroovyChangeSet</code>.
@@ -96,7 +75,7 @@ class GroovyDatabaseChangeLog extends DatabaseChangeLog {
           log.info("Skipping 'hidden' file ${it}")
         } else if(it.file.endsWith(".groovy")) {
           if ('file'.equalsIgnoreCase(it.protocol)) {
-            //see http://jira.codehaus.org/browse/GRAILSPLUGINS-1029 for the reason behind the below call
+            //see http://jira.codehaus.org/browse/GRAILSPLUGINS-1029 for the reasoning behind the below call
             it = FileUtils.toFile(it).toURI().toURL()
           }
 
@@ -145,7 +124,7 @@ class GroovyDatabaseChangeLog extends DatabaseChangeLog {
 	*/
 	void include(InputStream stream) {
 		try {
-			def closure = Eval.me("{ -> \n println \"Including a file\" \n" + stream.text + "\n}")
+      def closure = Eval.me("{ -> \n" + stream.text + "\n}")
       closure.delegate = this
       closure.resolveStrategy = Closure.DELEGATE_FIRST
       closure()
@@ -187,5 +166,4 @@ class GroovyDatabaseChangeLog extends DatabaseChangeLog {
       throw new ChangeLogParseException("Property requires either a 'name' or a 'file' to be specified")
     }
   }
-
 }

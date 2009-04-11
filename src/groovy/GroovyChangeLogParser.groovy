@@ -18,18 +18,19 @@ package liquibase.dsl.parser.groovy
 import liquibase.*
 import liquibase.parser.*
 import liquibase.exception.*
+import liquibase.database.Database
 
 /**
 *		Provides access to the properties set in the directory denoted by the "lbdsl.home" property.
 */
 class GroovyChangeLogParser implements ChangeLogParserImpl {
 
-	public DatabaseChangeLog parse(String physicalChangeLogLocation, FileOpener fileOpener, Map changeLogProperties) {
+	public DatabaseChangeLog parse(String physicalChangeLogLocation, FileOpener fileOpener, Map changeLogProperties, Database db) {
 		if(!fileOpener) {
       throw new IllegalArgumentException("Need to specify a fileOpener")
 		}
 		def txt = fileOpener.getResourceAsStream(physicalChangeLogLocation).text
-		def out = new GroovyDatabaseChangeLog(physicalChangeLogLocation);
+		def out = new GroovyDatabaseChangeLog(physicalChangeLogLocation, db);
 		out.fileOpener = fileOpener;
 		try {
 			Eval.me("databaseChangeLog", { Map props=[:], Closure closure -> 
