@@ -1,4 +1,4 @@
-<plugin name='autobase' version='0.8.2.5' grailsVersion='1.1 &gt; *'>
+<plugin name='autobase' version='0.8.3' grailsVersion='1.1 &gt; *'>
   <author>Robert Fischer</author>
   <authorEmail>robert.fischer@smokejumperit.com</authorEmail>
   <title>Automate your database work as much as possible</title>
