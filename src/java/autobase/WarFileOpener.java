@@ -1,3 +1,5 @@
+package autobase;
+
 import liquibase.*;
 import java.io.*;
 import java.util.*;

@@ -1,3 +1,5 @@
+package autobase;
+
 import liquibase.*;
 import java.io.InputStream;
 import java.io.IOException;

@@ -1,3 +1,5 @@
+package autobase
+
 import liquibase.*
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 

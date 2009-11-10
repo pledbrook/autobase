@@ -1,3 +1,5 @@
+package autobase;
+
 import liquibase.FileOpener;
 
 import java.io.InputStream;
