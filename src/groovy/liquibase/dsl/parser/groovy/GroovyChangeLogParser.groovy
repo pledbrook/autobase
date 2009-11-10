@@ -15,6 +15,7 @@ package liquibase.dsl.parser.groovy
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with Liquibase-DSL.  If not, see <http://www.gnu.org/licenses/>.
 //
+import grails.util.Environment
 import liquibase.*
 import liquibase.parser.*
 import liquibase.exception.*
@@ -32,6 +33,7 @@ class GroovyChangeLogParser implements ChangeLogParserImpl {
 		def txt = fileOpener.getResourceAsStream(physicalChangeLogLocation).text
 		def out = new GroovyDatabaseChangeLog(physicalChangeLogLocation, db);
 		out.fileOpener = fileOpener;
+		out.grailsEnv = Environment.current.name
 		try {
 			Eval.me("databaseChangeLog", { Map props=[:], Closure closure -> 
         props.entrySet().each { out[it.key] = it.value }
