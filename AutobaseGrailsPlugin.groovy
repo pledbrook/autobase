@@ -77,7 +77,7 @@ The approach to this plugin is to leave the database update mode ("hbm2ddl.auto"
 			try {
           def runOnCreateDrop = application.config.autobase.runOnCreateDrop
 			    if (runOnCreateDrop == false && application.config.dataSource.dbCreate == 'create-drop') {
-            log.info("Skipping Autobase migration due to create-drop (set 'autobase.runOnCreateDrop' to 'false' in Config.groovy to run anyway)")
+            log.info("Skipping Autobase migration due to create-drop (set 'autobase.runOnCreateDrop' to 'true' in Config.groovy to run anyway)")
           } else {
             log.info("---- Starting Autobase migrations  ----")
             Autobase.migrate(appCtx)
