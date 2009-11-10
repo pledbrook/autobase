@@ -13,12 +13,13 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-import org.slf4j.bridge.*;
-import grails.util.GrailsUtil;
-import org.apache.log4j.*
-import liquibase.parser.factory.OpenChangeFactory
+import autobase.Autobase
 import autobase.change.GroovyScriptChange
+import grails.util.GrailsUtil
 import java.util.logging.Handler
+import liquibase.parser.factory.OpenChangeFactory
+import org.apache.log4j.*
+import org.slf4j.bridge.*
 
 
 class AutobaseGrailsPlugin {

@@ -1,5 +1,6 @@
-import liquibase.*
+package autobase;
 
+import liquibase.*
 import liquibase.database.*
 import liquibase.log.LogFactory;
 import liquibase.dsl.command.MigrateCommand
