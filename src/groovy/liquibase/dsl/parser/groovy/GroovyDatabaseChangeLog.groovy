@@ -15,10 +15,12 @@ package liquibase.dsl.parser.groovy
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with Liquibase-DSL.  If not, see <http://www.gnu.org/licenses/>.
 //
-import liquibase.*;
-import liquibase.exception.*
+import grails.util.Environment
 import java.util.logging.*
+import liquibase.*
 import liquibase.database.Database
+import liquibase.exception.*
+import liquibase.parser.ChangeLogParser
 import org.apache.commons.io.*
 
 /**
@@ -69,6 +71,7 @@ class GroovyDatabaseChangeLog extends DatabaseChangeLog implements Conditionally
       throw new ChangeLogParseException("Must provide a directory path to \"includeAll\"")
     }
     try {
+      def baselinePattern = /\/baseline-(\w+)\.xml$/
       Enumeration enumer = fileOpener.getResources(dir)
       List resources = Collections.list(enumer)
       resources.each {
@@ -85,6 +88,18 @@ class GroovyDatabaseChangeLog extends DatabaseChangeLog implements Conditionally
             include(it)
           } else {
             log.fine("Skipping file ${it}")
+          }
+        } else if (it.file =~ baselinePattern) {
+          def m = it.file =~ baselinePattern
+          def env = m[0][1]
+          if (env == Environment.current.name) {
+            // This is the current environment, so execute this baseline
+            // migration script.
+            log.info("Including baseline migration ${it}")
+            includeXml(it.file)
+          }
+          else {
+            log.fine("Skipping baseline migration ${it} - different environment")
           }
         } else {
           log.info("Including directory ${it}")
@@ -135,6 +150,16 @@ class GroovyDatabaseChangeLog extends DatabaseChangeLog implements Conditionally
       throw new ChangeLogParseException("Unknown error while executing file at ${physicalFilePath}/${logicalFilePath}", e);
     }
 	}
+
+  /**
+   * Includes a standard Liquibase XML changelog.
+   */
+  void includeXml(String fileName) {
+    def changeLog = new ChangeLogParser().parse(fileName, fileOpener)
+    for (changeSet in changeLog.changeSets) {
+      this.addChangeSet(changeSet)
+    }
+  }
 
   private final Map storage = [:]
   def propertyMissing(String name, value) { 

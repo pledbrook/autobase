@@ -1,4 +1,5 @@
 import liquibase.Liquibase
+import liquibase.FileSystemFileOpener
 import liquibase.database.DatabaseFactory
 import liquibase.diff.Diff
 
@@ -6,7 +7,7 @@ includeTargets << grailsScript("_GrailsBootstrap")
 includeTargets << new File("${autobasePluginDir}/scripts/_MigrationBase.groovy")
 
 target(default: "Generates a baseline migration for the current database schema.") {
-  depends(parseArguments)
+  depends(parseArguments, packageApp, loadApp)
 
   // Get the data source from the Grails application.
 //  def dataSource = grailsApp.mainContext.getBean("dataSource")
@@ -44,22 +45,42 @@ target(default: "Generates a baseline migration for the current database schema.
 
   // Generate the changelog.
   def database = DatabaseFactory.instance.findCorrectDatabaseImplementation(connection)
+
+  // We can't use the Groovy migration format with the current version
+  // of the Liquibase class. Until a new version is released, we generate
+  // an XML file.
   try {
-    final outStream = new PipedOutputStream()
-    final inStream = new PipedInputStream(outStream)
-
-    // Start a thread to generate the XML changelog.
-    Thread.start("XML Writing") {
+    def migrationFile = new File("migrations", "baseline-${grailsEnv}.xml")
+    migrationFile.withOutputStream { out ->
       def diffResult = new Diff(database, null).compare()
-      
-      new PrintStream(outStream).withStream { out ->
-        diffResult.printChangeLog(out, database, classLoader.loadClass("liquibase.xml.DefaultXmlWriter").newInstance())
-      }
+      diffResult.printChangeLog(new PrintStream(out), database)
     }
+//    final outStream = new PipedOutputStream()
+//    final inStream = new PipedInputStream(outStream)
+//
+//    // Start a thread to generate the XML changelog.
+//    Thread.start("XML Writing") {
+//      def diffResult = new Diff(database, null).compare()
+//      
+//      new PrintStream(outStream).withStream { out ->
+//        diffResult.printChangeLog(out, database, classLoader.loadClass("liquibase.xml.DefaultXmlWriter").newInstance())
+//      }
+//    }
+//
+//    // Read from the piped input stream and create the Groovy migration
+//    // scripts from the piped XML.
+//    def migrationFile = new File("migrations", "baseline-${grailsEnv}.groovy")
+//    xmlToGroovyMigration(inStream, migrationFile.name)
 
-    // Read from the piped input stream and create the Groovy migration
-    // scripts from the piped XML.
-    xmlToGroovyMigration(inStream, "baseline-${grailsEnv}.groovy")
+//    def autobaseClass = classLoader.loadClass("autobase.Autobase")
+//    def lbDslClass = classLoader.loadClass("liquibase.LiquibaseDsl")
+//    def fileOpener = new FileSystemFileOpener()
+//    def fileOpener = autobaseClass.findFileOpener()
+//    autobaseClass.assignSystemProperties()
+
+//    def liquibase = lbDslClass.newInstance(migrationFile.path, fileOpener, database)
+    def liquibase = new Liquibase(migrationFile.path, new FileSystemFileOpener(), database)
+    liquibase.changeLogSync(null)
 
     event("StatusFinal", ["Baseline migration successfully created."])
   }
